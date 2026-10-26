@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700;12..96,800&family=Instrument+Serif:ital@1&family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@500&display=swap" rel="stylesheet">
+<style>html,body{margin:0;height:100%;background:#0b0b0e;overflow:hidden}a{color:#6d4ce6}a:hover{color:#4f33b8}</style>
+<script>window.OM_SCENES = '[{"name":"Hook","dur":3.2,"desc":"A brand website appears and posts fan out of it"},{"name":"Meet","dur":7.3,"desc":"Marka says hi; the URL is pasted and the brand profile fills in"},{"name":"Create","dur":8,"desc":"Marka points at on-brand posts, carousels, images and videos, then platforms"},{"name":"Extras","dur":8.3,"desc":"Workspace tabs: ad structure cloning, a Reddit reply draft, then approval"},{"name":"CTA","dur":5.5,"desc":"Headline, trial button and marka.social with Marka taking a selfie"}]';
+window.OM_PLAYBACK = '{"mode":"loop"}';</script>
+<script>window.TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+  "motionEditor": false,
+  "robotVoice": false,
+  "subtitles": true,
+  "accent": ["#3d6bff", "#8b5cf6"]
+}/*EDITMODE-END*/;</script>
+</helmet>
+<x-import component-from-global-scope="MarkaVideo" from="./animations-v3.jsx ./tweaks-panel.jsx ./marka-video.jsx" hint-size="100vw,100vh" style="position:fixed;inset:0"></x-import>
+</x-dc>
+</body>
+</html>

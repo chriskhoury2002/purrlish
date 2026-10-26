@@ -1,0 +1,903 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Purrlish — Your AI Content Cat</title>
+<script type="module" src="https://unpkg.com/@google/model-viewer@3.5.0/dist/model-viewer.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=DM+Sans:wght@400;500;700&family=Instrument+Serif:ital@1&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f3f4fb; --bg2:#e6e9fb; --ink:#14141c; --muted:#5d6075; --card:rgba(255,255,255,.72);
+  --line:rgba(20,20,40,.08); --brand:#3b6cf6; --brand2:#7b5cff; --pink:#f4b6c2;
+  --shadow:0 20px 60px -20px rgba(60,70,140,.28);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:"DM Sans",system-ui,sans-serif;color:var(--ink);background:var(--bg);overflow-x:hidden;-webkit-font-smoothing:antialiased}
+h1,h2,h3,.display{font-family:"Bricolage Grotesque",sans-serif;letter-spacing:-.03em}
+em.serif{font-family:"Instrument Serif",serif;font-weight:400;font-style:italic;letter-spacing:0}
+a{color:inherit;text-decoration:none}
+.wrap{max-width:1200px;margin:0 auto;padding:0 20px}
+
+/* ---------- background blobs ---------- */
+.bg{position:fixed;inset:0;z-index:-1;overflow:hidden;background:radial-gradient(1200px 700px at 70% -10%,#dfe4ff 0,transparent 60%),radial-gradient(900px 600px at -10% 30%,#efe6ff 0,transparent 60%),var(--bg)}
+.blob{position:absolute;border-radius:50%;filter:blur(70px);opacity:.55;animation:drift 18s ease-in-out infinite alternate}
+.blob.a{width:420px;height:420px;background:#c7d2ff;top:10%;left:60%}
+.blob.b{width:360px;height:360px;background:#e5d4ff;top:55%;left:-5%;animation-delay:-6s}
+.blob.c{width:300px;height:300px;background:#cdeefe;top:80%;left:70%;animation-delay:-12s}
+@keyframes drift{to{transform:translate(-80px,60px) scale(1.15)}}
+
+/* ---------- nav ---------- */
+nav{position:sticky;top:14px;z-index:50;margin:14px auto 0;max-width:1160px;width:calc(100% - 32px);display:flex;align-items:center;justify-content:space-between;padding:10px 12px 10px 18px;border-radius:999px;background:rgba(255,255,255,.7);backdrop-filter:blur(16px);border:1px solid var(--line);box-shadow:0 8px 30px -12px rgba(40,50,120,.2);animation:dropIn .8s cubic-bezier(.2,.9,.3,1.2) both}
+@keyframes dropIn{from{transform:translateY(-40px);opacity:0}}
+.logo{display:flex;align-items:center;gap:8px;font-family:"Bricolage Grotesque";font-weight:800;font-size:22px}
+.logo .mark{width:30px;height:30px}
+.links{display:flex;gap:26px;font-weight:500;color:var(--muted);font-size:15px}
+.links a{position:relative}
+.links a::after{content:"";position:absolute;left:0;bottom:-4px;height:2px;width:100%;background:var(--brand);transform:scaleX(0);transform-origin:right;transition:transform .3s}
+.links a:hover{color:var(--ink)}.links a:hover::after{transform:scaleX(1);transform-origin:left}
+.btn{display:inline-flex;align-items:center;gap:8px;border:0;cursor:pointer;font:600 15px "DM Sans";padding:12px 22px;border-radius:999px;background:var(--ink);color:#fff;transition:transform .2s,box-shadow .2s;will-change:transform}
+.btn:hover{box-shadow:0 12px 30px -10px rgba(20,20,40,.5)}
+.btn.ghost{background:#fff;color:var(--ink);border:1px solid var(--line)}
+.btn.brand{background:linear-gradient(135deg,var(--brand),var(--brand2))}
+.nav-right{display:flex;align-items:center;gap:8px}
+.burger{display:none;width:44px;height:44px;border-radius:50%;border:1px solid var(--line);background:#fff;cursor:pointer;flex-direction:column;align-items:center;justify-content:center;gap:4px}
+.burger span{width:18px;height:2px;border-radius:2px;background:var(--ink);transition:transform .3s,opacity .3s}
+nav.open .burger span:nth-child(1){transform:translateY(6px) rotate(45deg)}
+nav.open .burger span:nth-child(2){opacity:0}
+nav.open .burger span:nth-child(3){transform:translateY(-6px) rotate(-45deg)}
+.mobile-menu{position:absolute;top:calc(100% + 8px);left:0;right:0;display:flex;flex-direction:column;padding:8px;border-radius:24px;background:rgba(255,255,255,.95);backdrop-filter:blur(16px);border:1px solid var(--line);box-shadow:0 20px 50px -20px rgba(40,50,120,.35);opacity:0;transform:translateY(-10px) scale(.97);pointer-events:none;transition:opacity .25s,transform .3s cubic-bezier(.2,.9,.3,1.2)}
+.mobile-menu a{padding:14px 16px;border-radius:14px;font:600 17px "Bricolage Grotesque"}
+.mobile-menu a:active{background:#f0f2ff}
+nav.open .mobile-menu{opacity:1;transform:none;pointer-events:auto}
+@media(max-width:820px){.links{display:none}.burger{display:flex}nav .btn{padding:11px 16px;font-size:14px}}
+@media(min-width:821px){.mobile-menu{display:none}}
+
+/* ---------- hero ---------- */
+.hero{padding:70px 0 40px;text-align:center}
+.pill{display:inline-flex;align-items:center;gap:8px;padding:6px 14px 6px 6px;border-radius:999px;background:#fff;border:1px solid var(--line);font-size:14px;color:var(--muted)}
+.pill b{background:linear-gradient(135deg,var(--brand),var(--brand2));color:#fff;border-radius:999px;padding:3px 10px;font-size:12px}
+.hero h1{font-size:clamp(42px,7vw,88px);line-height:.98;margin:22px auto 18px;max-width:900px;font-weight:800}
+.hero p.lead{font-size:clamp(17px,2vw,20px);color:var(--muted);max-width:620px;margin:0 auto 30px}
+.hero .ctas{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+.word{display:inline-block;opacity:0;transform:translateY(40px) rotate(4deg);animation:wordUp .8s cubic-bezier(.2,.9,.3,1.1) forwards}
+@keyframes wordUp{to{opacity:1;transform:none}}
+.grad{background:linear-gradient(90deg,var(--brand),var(--brand2),#e3559b,var(--brand));background-size:300% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:shine 6s linear infinite}
+@keyframes shine{to{background-position:-300% 0}}
+.fade-up{opacity:0;transform:translateY(24px);animation:wordUp .9s ease forwards}
+
+/* ---------- scene ---------- */
+.scene{position:relative;height:620px;margin-top:40px;perspective:1200px}
+.scene svg.hero-cat{position:absolute;left:50%;bottom:0;transform:translateX(-50%);width:min(640px,100%);height:auto;overflow:visible}
+.fcard{position:absolute;display:flex;align-items:center;gap:14px;padding:16px 18px;min-width:250px;border-radius:22px;background:var(--card);backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.9);box-shadow:var(--shadow);text-align:left;cursor:pointer;transition:transform .35s cubic-bezier(.2,.9,.3,1.3),box-shadow .3s;opacity:0;animation:popIn .9s cubic-bezier(.2,.9,.3,1.3) forwards}
+.fcard .inner{animation:bob 5s ease-in-out infinite}
+.fcard:hover{box-shadow:0 30px 70px -20px rgba(60,70,160,.45)}
+.fcard .ic{width:52px;height:52px;border-radius:14px;display:grid;place-items:center;flex:none}
+.fcard h4{font:700 18px "Bricolage Grotesque"}
+.fcard p{font-size:13.5px;color:var(--muted);line-height:1.3}
+.fcard .chev{margin-left:auto;color:#9aa;transition:transform .3s}
+.fcard:hover .chev{transform:translateX(4px)}
+@keyframes popIn{from{opacity:0;transform:translateY(30px) scale(.8)}to{opacity:1}}
+@keyframes bob{50%{transform:translateY(-10px)}}
+.checklist{position:absolute;right:4%;top:62%;padding:14px 18px;border-radius:18px;background:var(--card);backdrop-filter:blur(14px);border:1px solid #fff;box-shadow:var(--shadow);text-align:left;font-size:14px;opacity:0;animation:popIn .9s 1.6s cubic-bezier(.2,.9,.3,1.3) forwards}
+.checklist li{list-style:none;display:flex;gap:10px;align-items:center;padding:5px 0}
+.checklist .tick{width:20px;height:20px;border-radius:50%;background:#e5e9ff;display:grid;place-items:center;transition:background .4s}
+.checklist .tick svg{stroke-dasharray:20;stroke-dashoffset:20;transition:stroke-dashoffset .5s .1s}
+.checklist li.done .tick{background:var(--brand)}
+.checklist li.done .tick svg{stroke-dashoffset:0}
+@media(max-width:980px){
+  .scene{height:auto;display:flex;flex-direction:column;align-items:center;gap:12px}
+  .scene svg.hero-cat{position:relative;left:auto;transform:none;order:-1}
+  .fcard,.checklist{position:relative;left:auto!important;right:auto!important;top:auto!important;width:100%;max-width:420px}
+}
+@media(max-width:600px){
+  .scene{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:24px}
+  .scene svg.hero-cat{grid-column:1/-1}
+  .fcard{min-width:0;padding:12px;border-radius:18px}
+  .fcard .ic{width:40px;height:40px;border-radius:12px}
+  .fcard .ic svg{width:20px;height:20px}
+  .fcard h4{font-size:15px}
+  .fcard p,.fcard .chev{display:none}
+  .checklist{grid-column:1/-1;max-width:none}
+  .tile{height:400px}
+  .cta{padding:44px 22px}
+  section{padding:64px 0}
+}
+
+/* ---------- cat svg animations ---------- */
+.lid{transform-box:fill-box;transform-origin:50% 0;transform:scaleY(0);animation:blink 5s infinite}
+@keyframes blink{0%,92%,100%{transform:scaleY(0)}95%{transform:scaleY(1)}}
+.ear-l{transform-box:fill-box;transform-origin:80% 100%;animation:twitch 7s infinite}
+.ear-r{transform-box:fill-box;transform-origin:20% 100%;animation:twitch 7s 3.4s infinite}
+@keyframes twitch{0%,90%,100%{transform:rotate(0)}93%{transform:rotate(-12deg)}96%{transform:rotate(4deg)}}
+.headbob{transform-box:fill-box;transform-origin:50% 90%;animation:tilt 8s ease-in-out infinite}
+@keyframes tilt{0%,100%{transform:rotate(0)}30%{transform:rotate(-3deg)}60%{transform:rotate(2.5deg)}}
+.breathe{transform-box:fill-box;transform-origin:50% 100%;animation:breathe 4s ease-in-out infinite}
+@keyframes breathe{50%{transform:scaleY(1.015) scaleX(1.008)}}
+.thinkpaw{transform-box:fill-box;transform-origin:50% 100%;animation:think 3.2s ease-in-out infinite}
+@keyframes think{0%,100%{transform:rotate(0)}50%{transform:rotate(-6deg) translateY(-3px)}}
+.steam path{stroke-dasharray:40;animation:steam 3s linear infinite;opacity:0}
+.steam path:nth-child(2){animation-delay:1s}.steam path:nth-child(3){animation-delay:2s}
+@keyframes steam{0%{stroke-dashoffset:40;opacity:0;transform:translateY(6px)}30%{opacity:.7}100%{stroke-dashoffset:0;opacity:0;transform:translateY(-14px)}}
+.leaf{transform-box:fill-box;transform-origin:50% 100%;animation:sway 4s ease-in-out infinite}
+.leaf:nth-child(2n){animation-delay:-1.3s;animation-duration:5s}
+@keyframes sway{50%{transform:rotate(5deg)}}
+.screen-glow{animation:glow 2.6s ease-in-out infinite}
+@keyframes glow{50%{opacity:.35}}
+.pupil{transition:transform .12s linear}
+
+/* ---------- marquee ---------- */
+.marquee{overflow:hidden;padding:30px 0;mask-image:linear-gradient(90deg,transparent,#000 12%,#000 88%,transparent)}
+.track{display:flex;gap:56px;width:max-content;animation:scroll 30s linear infinite;font:700 22px "Bricolage Grotesque";color:#9aa0bf}
+.track span{display:flex;align-items:center;gap:10px;white-space:nowrap}
+.track i{width:10px;height:10px;border-radius:3px;display:inline-block}
+@keyframes scroll{to{transform:translateX(-50%)}}
+
+/* ---------- sections ---------- */
+section{padding:90px 0}
+.kicker{font-size:13px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--brand)}
+.sec-title{font-size:clamp(34px,5vw,60px);line-height:1;margin:12px 0 14px;font-weight:800}
+.sec-sub{color:var(--muted);font-size:18px;max-width:560px}
+.center{text-align:center}.center .sec-sub{margin:0 auto}
+
+.reveal{opacity:0;transform:translateY(50px);transition:opacity .9s ease,transform .9s cubic-bezier(.2,.9,.3,1)}
+.reveal.in{opacity:1;transform:none}
+
+/* feature tiles */
+.tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:18px;margin-top:50px}
+@media(max-width:1050px){.tiles{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:600px){.tiles{grid-template-columns:1fr}}
+.tile{position:relative;height:440px;border-radius:28px;background:linear-gradient(180deg,#fff,#f6f7ff);border:1px solid #fff;box-shadow:var(--shadow);overflow:hidden;padding:24px 22px;transition:transform .4s cubic-bezier(.2,.9,.3,1.2);transform-style:preserve-3d}
+.tile .tic{width:46px;height:46px;border-radius:13px;display:grid;place-items:center;margin-bottom:14px;color:#fff}
+.tile h3{font-size:28px;line-height:1;font-weight:800}
+.tile p{color:var(--muted);font-size:15px;margin-top:6px;font-weight:500}
+.tile .bust{position:absolute;bottom:-6px;left:-14px;width:230px}
+.phone{position:absolute;right:16px;bottom:22px;width:124px;height:216px;border-radius:22px;background:#111;padding:6px;box-shadow:0 20px 40px -12px rgba(0,0,0,.4);transform:rotate(6deg);animation:phoneFloat 4.5s ease-in-out infinite}
+.tile:nth-child(2n) .phone{animation-delay:-2s}
+@keyframes phoneFloat{50%{transform:rotate(3deg) translateY(-10px)}}
+.phone .scr{width:100%;height:100%;border-radius:17px;background:#fff;overflow:hidden;padding:12px 8px 8px;font-size:8.5px;position:relative}
+.phone .notch{position:absolute;top:4px;left:50%;transform:translateX(-50%);width:36px;height:8px;border-radius:6px;background:#111}
+.mini-row{display:flex;gap:4px;align-items:center;margin-top:5px}
+.mini-cell{flex:1;height:30px;border-radius:5px;background:#eef1ff;position:relative}
+.mini-cell.ok::after{content:"✓";position:absolute;right:2px;bottom:1px;font-size:8px;color:#22c55e;font-weight:700}
+.bars{display:flex;align-items:flex-end;gap:5px;height:70px;margin-top:8px}
+.bars span{flex:1;border-radius:4px 4px 0 0;background:linear-gradient(180deg,#5b8cff,#3b6cf6);height:10%;transition:height 1s cubic-bezier(.2,.9,.3,1.2)}
+.tile.in .bars span{height:var(--h)}
+.bubble{border-radius:10px;padding:6px 8px;margin-top:6px;max-width:92%;opacity:0;transform:translateY(8px);transition:.5s}
+.bubble.show{opacity:1;transform:none}
+.bubble.me{background:#e8eeff;margin-left:auto}
+.bubble.bot{background:#f2f2f6}
+.typing{display:inline-flex;gap:3px}.typing i{width:4px;height:4px;border-radius:50%;background:#999;animation:dot 1s infinite}.typing i:nth-child(2){animation-delay:.15s}.typing i:nth-child(3){animation-delay:.3s}
+@keyframes dot{50%{transform:translateY(-3px);opacity:.4}}
+.sparkle{position:absolute;color:var(--brand);font-size:22px;animation:spark 2s ease-in-out infinite}
+@keyframes spark{50%{transform:scale(1.4) rotate(20deg);opacity:.5}}
+
+/* how it works */
+.steps{display:grid;grid-template-columns:repeat(4,1fr);gap:18px;margin-top:50px;position:relative}
+@media(max-width:900px){.steps{grid-template-columns:1fr 1fr}}
+@media(max-width:520px){.steps{grid-template-columns:1fr}}
+.step{background:var(--card);border:1px solid #fff;border-radius:24px;padding:26px;box-shadow:var(--shadow);position:relative;overflow:hidden}
+.step .n{font:800 64px/1 "Bricolage Grotesque";color:transparent;-webkit-text-stroke:1.5px #c7cdf3}
+.step h3{font-size:24px;margin:10px 0 6px}
+.step p{color:var(--muted);font-size:15px}
+.step .paw{position:absolute;right:16px;top:20px;width:34px;opacity:.15;transition:.5s}
+.step:hover .paw{opacity:.9;transform:rotate(-20deg) scale(1.2)}
+
+/* stats */
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:40px}
+@media(max-width:700px){.stats{grid-template-columns:1fr}}
+.stat{text-align:center;padding:30px;border-radius:24px;background:#14141c;color:#fff;position:relative;overflow:hidden}
+.stat b{font:800 54px "Bricolage Grotesque";display:block}
+.stat span{color:#a7abc7}
+.stat::before{content:"";position:absolute;inset:-50%;background:conic-gradient(from 0deg,transparent,rgba(123,92,255,.35),transparent 30%);animation:spin 6s linear infinite}
+.stat > *{position:relative}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* pricing */
+.plans{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:50px;align-items:stretch}
+@media(max-width:900px){.plans{grid-template-columns:1fr}}
+.plan{background:#fff;border-radius:28px;padding:30px;border:1px solid var(--line);box-shadow:var(--shadow);display:flex;flex-direction:column;gap:14px;transition:transform .3s}
+.plan:hover{transform:translateY(-8px)}
+.plan.pop{background:linear-gradient(160deg,#1b1b26,#2a2550);color:#fff;transform:scale(1.03)}
+.plan.pop:hover{transform:scale(1.03) translateY(-8px)}
+.plan .price{font:800 48px "Bricolage Grotesque"}
+.plan .price small{font-size:16px;font-weight:500;opacity:.6}
+.plan ul{list-style:none;display:flex;flex-direction:column;gap:9px;font-size:15px;flex:1}
+.plan li::before{content:"🐾 "}
+.plan .tag{align-self:flex-start;font-size:12px;font-weight:700;padding:4px 10px;border-radius:999px;background:linear-gradient(135deg,var(--brand),var(--brand2));color:#fff}
+
+/* cta */
+.cta{border-radius:36px;background:linear-gradient(135deg,#3b6cf6,#7b5cff 60%,#c25bd6);color:#fff;padding:60px 40px;position:relative;overflow:hidden;display:grid;grid-template-columns:1.2fr 1fr;align-items:center;gap:20px}
+@media(max-width:800px){.cta{grid-template-columns:1fr;text-align:center}}
+.cta h2{font-size:clamp(36px,5vw,58px);line-height:1}
+.cta p{opacity:.85;margin:14px 0 24px;font-size:18px}
+.cta .btn{background:#fff;color:var(--ink)}
+.cta svg{width:100%;max-width:340px;justify-self:center}
+.wave{transform-box:fill-box;transform-origin:50% 100%;animation:wave 1.6s ease-in-out infinite}
+@keyframes wave{0%,100%{transform:rotate(-10deg)}50%{transform:rotate(18deg)}}
+.cta .ring{position:absolute;border:1px solid rgba(255,255,255,.25);border-radius:50%;animation:ripple 6s linear infinite}
+@keyframes ripple{from{width:0;height:0;opacity:1}to{width:900px;height:900px;opacity:0}}
+
+footer{padding:50px 0 60px;color:var(--muted);font-size:14px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px}
+
+/* paw cursor trail */
+.trail{position:fixed;pointer-events:none;z-index:999;width:16px;height:16px;opacity:.6;animation:fadePaw 1s forwards}
+@keyframes fadePaw{to{opacity:0;transform:scale(.4)}}
+
+/* ---------- explainer video ---------- */
+.video-frame{margin:46px auto 0;max-width:1040px;border-radius:28px;padding:10px;background:linear-gradient(135deg,rgba(255,255,255,.9),rgba(255,255,255,.5));border:1px solid #fff;box-shadow:0 40px 100px -30px rgba(70,60,180,.45);transform:perspective(1400px) rotateX(14deg) scale(.92);transition:transform 1.2s cubic-bezier(.2,.9,.3,1),opacity .9s}
+.video-frame.in{transform:none}
+.vf-bar{display:flex;align-items:center;gap:7px;padding:4px 10px 12px;font-size:13px;color:var(--muted)}
+.vf-bar i{width:11px;height:11px;border-radius:50%;background:#ff5f57}.vf-bar i:nth-child(2){background:#febc2e}.vf-bar i:nth-child(3){background:#28c840}
+.vf-bar span{margin-left:auto;font-weight:500}
+.vf-screen{position:relative;aspect-ratio:16/9;border-radius:20px;overflow:hidden;background:#0b0b0e}
+.vf-screen iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+.vf-play{position:absolute;inset:0;margin:auto;width:92px;height:92px;border-radius:50%;border:0;cursor:pointer;color:#fff;background:linear-gradient(135deg,var(--brand),var(--brand2));box-shadow:0 0 0 0 rgba(123,92,255,.6);animation:pulse 2s infinite;transition:transform .3s,opacity .4s}
+.vf-play svg{width:38px;height:38px;margin-left:5px}
+.vf-play:hover{transform:scale(1.1)}
+.vf-screen.playing .vf-play{opacity:0;pointer-events:none;transform:scale(1.6)}
+@keyframes pulse{70%{box-shadow:0 0 0 28px rgba(123,92,255,0)}100%{box-shadow:0 0 0 0 rgba(123,92,255,0)}}
+
+/* ---------- live effects ---------- */
+#progress{position:fixed;top:0;left:0;height:4px;width:100%;z-index:100;transform-origin:0 50%;transform:scaleX(0);background:linear-gradient(90deg,#3b6cf6,#7b5cff,#e3559b)}
+#spot{position:fixed;width:520px;height:520px;border-radius:50%;pointer-events:none;z-index:-1;background:radial-gradient(circle,rgba(123,92,255,.18),transparent 65%);transform:translate(-50%,-50%);transition:opacity .4s}
+#fx{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:0}
+.hero{position:relative}.hero > *:not(#fx){position:relative;z-index:1}
+.btn{position:relative;overflow:hidden}
+.btn::after{content:"";position:absolute;top:0;left:-60%;width:40%;height:100%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.55),transparent);transform:skewX(-20deg);animation:sheen 3.6s ease-in-out infinite}
+@keyframes sheen{0%,60%{left:-60%}100%{left:130%}}
+/* rotating gradient border */
+@property --ang{syntax:"<angle>";inherits:false;initial-value:0deg}
+.plan{position:relative}
+.glow-border::before{content:"";position:absolute;inset:0;border-radius:inherit;padding:2px;background:conic-gradient(from var(--ang),transparent 0 60%,#3b6cf6,#7b5cff,#e3559b,transparent);-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;opacity:0;transition:opacity .4s;animation:rot 3s linear infinite;pointer-events:none;z-index:2}
+.glow-border:hover::before,.plan.pop::before{opacity:1}
+@keyframes rot{to{--ang:360deg}}
+/* inner spotlight on tiles */
+.tile::after{content:"";position:absolute;inset:0;background:radial-gradient(260px circle at var(--mx,50%) var(--my,50%),rgba(123,92,255,.14),transparent 60%);opacity:0;transition:opacity .3s;pointer-events:none}
+.tile:hover::after{opacity:1}
+/* toasts */
+#toasts{position:absolute;left:50%;top:-10px;transform:translateX(-50%);z-index:5;display:flex;flex-direction:column;align-items:center;gap:8px;pointer-events:none}
+.toast{display:flex;align-items:center;gap:10px;padding:9px 14px 9px 10px;border-radius:14px;background:#fff;box-shadow:0 14px 40px -12px rgba(40,50,120,.35);font-size:13.5px;font-weight:500;animation:toast 3.4s cubic-bezier(.2,.9,.3,1.3) forwards}
+.toast i{width:26px;height:26px;border-radius:8px;display:grid;place-items:center;color:#fff;font-style:normal;font-size:13px;font-weight:700}
+@keyframes toast{0%{opacity:0;transform:translateY(-20px) scale(.8)}12%,82%{opacity:1;transform:none}100%{opacity:0;transform:translateY(-14px) scale(.95)}}
+/* meow bubble + hearts */
+#heroCat{cursor:pointer}
+.meow{position:absolute;padding:8px 14px;border-radius:16px 16px 16px 4px;background:#14141c;color:#fff;font:700 16px "Bricolage Grotesque";pointer-events:none;z-index:6;animation:meow 1.4s cubic-bezier(.2,.9,.3,1.4) forwards}
+@keyframes meow{0%{opacity:0;transform:scale(.3) translateY(10px)}20%{opacity:1;transform:scale(1)}80%{opacity:1}100%{opacity:0;transform:translateY(-30px)}}
+.heart{position:fixed;pointer-events:none;z-index:200;font-size:20px;animation:burst 1.1s ease-out forwards}
+@keyframes burst{to{transform:translate(var(--dx),var(--dy)) rotate(var(--r)) scale(.4);opacity:0}}
+.cat-jump{animation:jump .6s cubic-bezier(.3,1.6,.5,1)}
+@keyframes jump{40%{transform:translateX(-50%) translateY(-18px)}}
+@media(max-width:980px){@keyframes jump{40%{transform:translateY(-18px)}}}
+/* yarn ball */
+.yarn-lane{position:relative;height:60px;overflow:hidden}
+.yarn{position:absolute;bottom:6px;left:-80px;width:48px;height:48px;animation:roll 14s linear infinite}
+.yarn svg{width:100%;height:100%;animation:spinY 1.2s linear infinite}
+.yarn-lane .thread{position:absolute;bottom:8px;left:0;height:2px;background:#e3559b;border-radius:2px;animation:thread 14s linear infinite;opacity:.6}
+@keyframes roll{to{left:calc(100% + 80px)}}
+@keyframes thread{to{width:calc(100% + 60px)}}
+@keyframes spinY{to{transform:rotate(360deg)}}
+/* title underline draw */
+.sec-title em.serif{position:relative;display:inline-block}
+.sec-title em.serif::after{content:"";position:absolute;left:0;right:0;bottom:-2px;height:10px;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 10'%3E%3Cpath d='M2 7 Q50 1 100 6 T198 4' stroke='%237b5cff' stroke-width='3' fill='none' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat center/100% 100%;clip-path:inset(0 100% 0 0);transition:clip-path 1.2s .5s cubic-bezier(.6,0,.2,1)}
+.reveal.in .sec-title em.serif::after{clip-path:inset(0 0 0 0)}
+/* rotating word */
+.rot-word{display:inline-block;color:var(--ink);font-weight:700;min-width:6ch;text-align:left}
+.rot-word span{display:inline-block;animation:flipIn .5s cubic-bezier(.2,.9,.3,1.3)}
+@keyframes flipIn{from{opacity:0;transform:translateY(60%) rotateX(80deg)}}
+
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}.word,.fade-up,.fcard,.checklist,.reveal{opacity:1!important;transform:none!important}}
+
+/* ---------- 3D cat ---------- */
+.cat3d-wrap{position:absolute;left:50%;bottom:0;width:400px;height:600px;transform:translateX(-50%);z-index:2}
+.cat3d-float{position:absolute;inset:0;animation:float3d 4.5s ease-in-out infinite}
+@keyframes float3d{50%{transform:translateY(-14px)}}
+#cat3d{width:100%;height:100%;--poster-color:transparent;opacity:0;transform:scale(.85) translateY(30px);transition:opacity 1s,transform 1.2s cubic-bezier(.2,.9,.3,1.3);cursor:grab}
+#cat3d.loaded{opacity:1;transform:none}
+#cat3d:active{cursor:grabbing}
+.cat3d-wrap.hop .cat3d-float{animation:hop3d .7s cubic-bezier(.3,1.6,.5,1)}
+@keyframes hop3d{40%{transform:translateY(-46px)}}
+.pedestal{position:absolute;left:50%;bottom:6px;width:300px;height:56px;transform:translateX(-50%);border-radius:50%;background:radial-gradient(closest-side,rgba(123,92,255,.35),rgba(59,108,246,.12) 60%,transparent);filter:blur(2px)}
+.pedestal::before,.pedestal::after{content:"";position:absolute;inset:0;border-radius:50%;border:2px solid rgba(123,92,255,.45);animation:ring3d 3s ease-out infinite}
+.pedestal::after{animation-delay:1.5s}
+@keyframes ring3d{from{transform:scale(.4);opacity:1}to{transform:scale(1.25);opacity:0}}
+.loader3d{position:absolute;left:50%;top:45%;transform:translate(-50%,-50%);font:600 14px "DM Sans";color:var(--muted);display:flex;align-items:center;gap:10px;transition:opacity .4s}
+.loader3d i{width:22px;height:22px;border-radius:50%;border:3px solid #dfe3ff;border-top-color:var(--brand2);animation:spin .8s linear infinite}
+.cat3d-wrap.ready .loader3d{opacity:0}
+.hint3d{position:absolute;left:50%;bottom:-6px;transform:translateX(-50%);font-size:12.5px;color:var(--muted);white-space:nowrap;background:rgba(255,255,255,.7);padding:4px 12px;border-radius:999px;border:1px solid #fff}
+.cat3d-bust{position:absolute;left:-14px;bottom:-30px;width:240px;height:320px;--poster-color:transparent;pointer-events:none;animation:float3d 5s ease-in-out infinite}
+.tile:nth-child(2n) .cat3d-bust{animation-delay:-2.2s}
+.cat3d-cta{width:100%;max-width:340px;height:480px;margin:-40px 0 -190px;align-self:end;justify-self:center;--poster-color:transparent;animation:float3d 4.5s ease-in-out infinite}
+@media(max-width:800px){.cat3d-cta{height:380px;margin:16px auto -150px}}
+@media(max-width:980px){.cat3d-wrap{position:relative;left:auto;transform:none;order:-1;width:100%;max-width:400px;height:520px}}
+@media(max-width:600px){.cat3d-wrap{grid-column:1/-1;margin:0 auto;height:440px}.pedestal{width:240px}}
+</style>
+</head>
+<body>
+<div class="bg"><div class="blob a"></div><div class="blob b"></div><div class="blob c"></div></div>
+<div id="progress"></div><div id="spot"></div>
+
+<nav>
+  <a class="logo" href="#"><svg class="mark" viewBox="0 0 40 40"><path d="M6 8 L14 18 L26 18 L34 8 L33 26 Q20 38 7 26Z" fill="#14141c"/><circle cx="15" cy="24" r="2.4" fill="#fff"/><circle cx="25" cy="24" r="2.4" fill="#fff"/></svg>Purrlish</a>
+  <div class="links"><a href="#features">Features</a><a href="#how">How it works</a><a href="#pricing">Pricing</a></div>
+  <div class="nav-right"><a class="btn magnetic" href="#pricing">Start free</a>
+  <button class="burger" aria-label="Open menu" aria-expanded="false"><span></span><span></span><span></span></button></div>
+  <div class="mobile-menu"><a href="#video">Watch the video</a><a href="#features">Features</a><a href="#how">How it works</a><a href="#pricing">Pricing</a></div>
+</nav>
+
+<header class="hero wrap">
+  <canvas id="fx"></canvas>
+  <span class="pill fade-up" style="animation-delay:.1s"><b>NEW</b> Meet Whiskers, your AI content cat</span>
+  <h1 id="headline"></h1>
+  <p class="lead fade-up" style="animation-delay:.9s">Whiskers generates images, carousels and videos, plans your week, and publishes everywhere — while you take a nap. 🐾<br>Today it's making <span class="rot-word" id="rot"><span>reels</span></span></p>
+  <div class="ctas fade-up" style="animation-delay:1.1s">
+    <a class="btn brand magnetic" href="#pricing">Hire Whiskers — it's free →</a>
+    <a class="btn ghost magnetic" href="#how">See how it works</a>
+  </div>
+
+  <div class="scene" id="scene">
+    <div id="toasts"></div>
+    <!-- floating feature cards -->
+    <div class="fcard tilt" style="left:2%;top:4%;animation-delay:.9s"><div class="inner" style="display:flex;gap:14px;align-items:center;width:100%">
+      <div class="ic" style="background:linear-gradient(135deg,#5ab3ff,#2f7cf6)"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M3 17l5-5 4 4 3-3 6 6"/><circle cx="16" cy="9" r="1.6" fill="#fff"/></svg></div>
+      <div><h4>Images</h4><p>Turn ideas into<br>scroll-stopping visuals</p></div><span class="chev">›</span></div></div>
+    <div class="fcard tilt" style="left:0%;top:25%;animation-delay:1.05s"><div class="inner" style="display:flex;gap:14px;align-items:center;width:100%;animation-delay:-1.5s">
+      <div class="ic" style="background:linear-gradient(135deg,#ffd6c2,#f8b4d0)"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#c03a7b" stroke-width="2"><rect x="7" y="7" width="13" height="13" rx="3"/><path d="M4 16V6a2 2 0 0 1 2-2h10"/></svg></div>
+      <div><h4>Carousels</h4><p>Multi-slide stories<br>that engage</p></div><span class="chev">›</span></div></div>
+    <div class="fcard tilt" style="left:-2%;top:46%;animation-delay:1.2s"><div class="inner" style="display:flex;gap:14px;align-items:center;width:100%;animation-delay:-3s">
+      <div class="ic" style="background:linear-gradient(135deg,#bff0d6,#7dd8b0)"><svg width="26" height="26" viewBox="0 0 24 24"><path d="M8 5l12 7-12 7z" fill="#167a57"/></svg></div>
+      <div><h4>Video</h4><p>Short-form content<br>in seconds</p></div><span class="chev">›</span></div></div>
+    <div class="fcard tilt" style="right:2%;top:6%;animation-delay:1.35s"><div class="inner" style="display:flex;gap:14px;align-items:center;width:100%;animation-delay:-2s">
+      <div class="ic" style="background:linear-gradient(135deg,#e2d8ff,#b7a3ff)"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#5b3fd6" stroke-width="2"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/><circle cx="8" cy="14" r="1" fill="#5b3fd6"/><circle cx="12" cy="14" r="1" fill="#5b3fd6"/><circle cx="16" cy="14" r="1" fill="#5b3fd6"/></svg></div>
+      <div><h4>Planning</h4><p>Schedule and<br>automate posts</p></div><span class="chev">›</span></div></div>
+    <div class="fcard tilt" style="right:0%;top:30%;animation-delay:1.5s"><div class="inner" style="display:flex;gap:14px;align-items:center;width:100%;animation-delay:-4s">
+      <div class="ic" style="background:linear-gradient(135deg,#d3ecff,#9fd0ff)"><svg width="26" height="26" viewBox="0 0 24 24" fill="#2f7cf6"><rect x="4" y="13" width="4" height="7" rx="1"/><rect x="10" y="9" width="4" height="11" rx="1"/><rect x="16" y="4" width="4" height="16" rx="1"/></svg></div>
+      <div><h4>Multi-platform</h4><p>Publish everywhere<br>from one place</p></div><span class="chev">›</span></div></div>
+    <ul class="checklist" id="checklist">
+      <li><span class="tick"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="#fff" stroke-width="2"><path d="M2 6.5l2.5 2.5L10 3.5"/></svg></span>Generate content</li>
+      <li><span class="tick"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="#fff" stroke-width="2"><path d="M2 6.5l2.5 2.5L10 3.5"/></svg></span>Plan for the week</li>
+      <li><span class="tick"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="#fff" stroke-width="2"><path d="M2 6.5l2.5 2.5L10 3.5"/></svg></span>Publish everywhere</li>
+    </ul>
+
+    <!-- original SVG cat kept hidden so the shared scripts still find #heroCat -->
+    <svg class="hero-cat" id="heroCat" viewBox="0 0 640 560" style="display:none"></svg>
+    <!-- 3D cat preview -->
+    <div class="cat3d-wrap" id="cat3dWrap">
+      <div class="pedestal"></div>
+      <div class="cat3d-float">
+        <model-viewer id="cat3d" src="models/cat-hoodie.glb" alt="3D cat in a hoodie" camera-controls disable-zoom disable-pan
+          interaction-prompt="none" touch-action="pan-y" camera-orbit="0deg 80deg auto" field-of-view="24deg"
+          interpolation-decay="120" environment-image="neutral" exposure="1.05" shadow-intensity="1.2" shadow-softness="1"></model-viewer>
+      </div>
+      <div class="loader3d"><i></i>Loading 3D cat…</div>
+      <span class="hint3d">Drag to spin · click for a hop</span>
+    </div>
+  </div>
+</header>
+
+<div class="marquee"><div class="track" id="track"></div></div>
+<div class="yarn-lane"><div class="thread"></div><div class="yarn"><svg viewBox="0 0 48 48"><circle cx="24" cy="24" r="22" fill="#f08bb4"/><g stroke="#d4578f" stroke-width="2.2" fill="none"><path d="M6 16 Q24 30 42 14"/><path d="M4 26 Q24 40 44 24"/><path d="M14 6 Q30 24 18 44"/><path d="M26 3 Q42 22 32 45"/></g></svg></div></div>
+
+<section id="video" class="wrap">
+  <div class="center reveal">
+    <span class="kicker">Watch it work</span>
+    <h2 class="sec-title">30 seconds. <em class="serif">One cat.</em></h2>
+    <p class="sec-sub">From a website link to a week of posts on every channel.</p>
+  </div>
+  <div class="video-frame reveal">
+    <div class="vf-bar"><i></i><i></i><i></i><span>explainer · 0:32</span></div>
+    <div class="vf-screen">
+      <iframe data-src="explainer/Marka%20Explainer.dc.html" title="Explainer video" allow="autoplay" loading="lazy"></iframe>
+      <button class="vf-play" aria-label="Play video"><svg viewBox="0 0 24 24"><path d="M8 5l12 7-12 7z" fill="currentColor"/></svg></button>
+    </div>
+  </div>
+</section>
+
+<section id="features" class="wrap">
+  <div class="center reveal">
+    <span class="kicker">One cat. Every channel.</span>
+    <h2 class="sec-title">Your whole marketing team,<br><em class="serif">with whiskers.</em></h2>
+    <p class="sec-sub">Brief Whiskers once. Get posts, threads, ads and replies — on brand and on time.</p>
+  </div>
+  <div class="tiles">
+    <article class="tile reveal tilt" style="transition-delay:.0s">
+      <div class="tic" style="background:linear-gradient(135deg,#a77bff,#7b5cff)">#</div>
+      <h3>Socials that grow.</h3><p>Plan and publish across all your channels.</p>
+      <div class="phone"><div class="scr"><div class="notch"></div><b>This week</b>
+        <div class="mini-row"><div class="mini-cell ok"></div><div class="mini-cell ok"></div><div class="mini-cell ok"></div></div>
+        <div class="mini-row"><div class="mini-cell ok"></div><div class="mini-cell"></div><div class="mini-cell" style="background:#fff;border:1px dashed #c7cdf3"></div></div>
+        <div style="margin-top:10px;padding:6px;border-radius:8px;background:#f3efff;color:#5b3fd6;font-weight:700;text-align:center">✈ Publish everywhere</div></div></div>
+      <svg class="bust" data-bust="selfie" viewBox="0 0 260 240"></svg>
+      <span class="sparkle" style="left:46%;top:44%">✦</span>
+    </article>
+    <article class="tile reveal tilt" style="transition-delay:.12s">
+      <div class="tic" style="background:linear-gradient(135deg,#ff7a45,#ff4500)"><svg width="24" height="24" viewBox="0 0 24 24" fill="#fff"><circle cx="12" cy="14" r="7"/><circle cx="18" cy="5" r="2"/><circle cx="9" cy="14" r="1.2" fill="#ff4500"/><circle cx="15" cy="14" r="1.2" fill="#ff4500"/></svg></div>
+      <h3>Reddit Ninja.</h3><p>Find communities. Draft. Publish.</p>
+      <div class="phone"><div class="scr"><div class="notch"></div><b style="color:#ff4500">r/</b><b>startups</b>
+        <div class="bubble bot show" style="max-width:100%">Found 12 threads asking for a tool like yours 👀</div>
+        <div class="bubble me show">Draft a helpful reply</div>
+        <div style="margin-top:8px;height:5px;border-radius:3px;background:#eee"><div style="height:100%;width:70%;border-radius:3px;background:#ff4500"></div></div>
+        <div style="margin-top:8px;padding:5px;border-radius:8px;background:#ff4500;color:#fff;text-align:center;font-weight:700">Publish reply</div></div></div>
+      <svg class="bust" data-bust="point" viewBox="0 0 260 240"></svg>
+    </article>
+    <article class="tile reveal tilt" style="transition-delay:.24s">
+      <div class="tic" style="background:linear-gradient(135deg,#52a8ff,#2f7cf6)"><svg width="24" height="24" viewBox="0 0 24 24" fill="#fff"><path d="M3 10v4h3l6 4V6L6 10z"/><path d="M16 8a5 5 0 0 1 0 8" stroke="#fff" stroke-width="2" fill="none"/></svg></div>
+      <h3>Ads that sell.</h3><p>Turn product moments into ad creative, fast.</p>
+      <div class="phone"><div class="scr"><div class="notch"></div><b>Ad performance</b>
+        <div class="bars"><span style="--h:35%"></span><span style="--h:55%"></span><span style="--h:45%"></span><span style="--h:75%"></span><span style="--h:95%"></span></div>
+        <div style="display:flex;justify-content:space-between;margin-top:6px"><span>CTR <b style="color:#16a34a">+212%</b></span><span>ROAS <b>4.8×</b></span></div>
+        <div style="margin-top:8px;padding:5px;border-radius:8px;background:#2f7cf6;color:#fff;text-align:center;font-weight:700">Shop now</div></div></div>
+      <svg class="bust" data-bust="point" viewBox="0 0 260 240"></svg>
+    </article>
+    <article class="tile reveal tilt" style="transition-delay:.36s">
+      <div class="tic" style="background:linear-gradient(135deg,#5fd0ff,#2fa8e6)"><svg width="24" height="24" viewBox="0 0 24 24" fill="#fff"><path d="M4 5h16v11H9l-5 4z"/></svg></div>
+      <h3>Chat from anywhere.</h3><p>Brief Whiskers in Telegram or ChatGPT.</p>
+      <div class="phone"><div class="scr" id="chat"><div class="notch"></div><b>Whiskers</b>
+        <div class="bubble me">Plan next week's posts</div>
+        <div class="bubble bot"><span class="typing"><i></i><i></i><i></i></span></div>
+        <div class="bubble bot">7 drafts ready for review ✅</div>
+        <div class="bubble me">Ship it 🚀</div></div></div>
+      <svg class="bust" data-bust="phone" viewBox="0 0 260 240"></svg>
+    </article>
+  </div>
+</section>
+
+<section id="how" class="wrap">
+  <div class="center reveal">
+    <span class="kicker">How it works</span>
+    <h2 class="sec-title">Create. Plan. Publish. <em class="serif">Grow.</em></h2>
+    <p class="sec-sub">Four steps. Zero hairballs.</p>
+  </div>
+  <div class="steps">
+    <div class="step reveal tilt"><span class="n">01</span><h3>Create</h3><p>Drop a link, a photo or a single sentence. Whiskers turns it into images, carousels and videos.</p><svg class="paw" viewBox="0 0 40 40"><use href="#pawSym"/></svg></div>
+    <div class="step reveal tilt" style="transition-delay:.1s"><span class="n">02</span><h3>Plan</h3><p>A full content calendar for the week, tuned to when your audience actually scrolls.</p><svg class="paw" viewBox="0 0 40 40"><use href="#pawSym"/></svg></div>
+    <div class="step reveal tilt" style="transition-delay:.2s"><span class="n">03</span><h3>Publish</h3><p>Instagram, TikTok, LinkedIn, X, YouTube, Reddit — one click, every channel.</p><svg class="paw" viewBox="0 0 40 40"><use href="#pawSym"/></svg></div>
+    <div class="step reveal tilt" style="transition-delay:.3s"><span class="n">04</span><h3>Grow</h3><p>Whiskers learns what works and doubles down. Good content travels further.</p><svg class="paw" viewBox="0 0 40 40"><use href="#pawSym"/></svg></div>
+  </div>
+  <div class="stats">
+    <div class="stat reveal"><b data-count="12000">0</b><span>posts published weekly</span></div>
+    <div class="stat reveal" style="transition-delay:.1s"><b data-count="9">0</b><span>platforms, one dashboard</span></div>
+    <div class="stat reveal" style="transition-delay:.2s"><b data-count="14" data-suffix="h">0</b><span>saved per week, on average</span></div>
+  </div>
+</section>
+
+<section id="pricing" class="wrap">
+  <div class="center reveal">
+    <span class="kicker">Pricing</span>
+    <h2 class="sec-title">Cheaper than <em class="serif">cat food.</em></h2>
+    <p class="sec-sub">Start free. Upgrade when Whiskers starts paying for itself.</p>
+  </div>
+  <div class="plans">
+    <div class="plan reveal"><h3>Kitten</h3><div class="price">$0<small>/mo</small></div><ul><li>10 posts / month</li><li>2 connected channels</li><li>Images & carousels</li></ul><a class="btn ghost magnetic" href="#">Start free</a></div>
+    <div class="plan pop reveal" style="transition-delay:.1s"><span class="tag">Most popular</span><h3>Cat</h3><div class="price">$29<small>/mo</small></div><ul><li>Unlimited posts</li><li>All 9 platforms</li><li>Video & ad creative</li><li>Reddit Ninja</li></ul><a class="btn brand magnetic" href="#">Hire Whiskers</a></div>
+    <div class="plan reveal" style="transition-delay:.2s"><h3>Big Cat</h3><div class="price">$99<small>/mo</small></div><ul><li>Everything in Cat</li><li>5 brands / workspaces</li><li>Team approvals</li><li>Telegram & ChatGPT briefs</li></ul><a class="btn ghost magnetic" href="#">Talk to us</a></div>
+  </div>
+</section>
+
+<section class="wrap" style="padding-top:20px">
+  <div class="cta reveal">
+    <span class="ring" style="left:80%;top:50%"></span><span class="ring" style="left:80%;top:50%;animation-delay:-3s"></span>
+    <div><h2>Good content<br>travels further.</h2><p>Let Whiskers handle the posting. You handle the purring.</p><a class="btn magnetic" href="#">Get started — free →</a></div>
+    <svg viewBox="0 0 260 240" data-bust="wave"></svg>
+  </div>
+  <footer><span>© 2026 Purrlish. Made with 🐾</span><span>Privacy · Terms · Contact</span></footer>
+</section>
+
+<!-- shared symbols -->
+<svg width="0" height="0" style="position:absolute">
+  <defs>
+    <radialGradient id="gFur" cx="45%" cy="32%" r="72%"><stop offset="0" stop-color="#ffffff"/><stop offset=".55" stop-color="#f5f5f9"/><stop offset="1" stop-color="#d3d4de"/></radialGradient>
+    <radialGradient id="gEarIn" cx="50%" cy="85%" r="85%"><stop offset="0" stop-color="#ee9fb0"/><stop offset=".6" stop-color="#f6c2cd"/><stop offset="1" stop-color="#fbe1e7"/></radialGradient>
+    <radialGradient id="gIris" cx="50%" cy="42%" r="62%"><stop offset="0" stop-color="#eeeab0"/><stop offset=".5" stop-color="#b7c170"/><stop offset="1" stop-color="#5f6d32"/></radialGradient>
+    <linearGradient id="gNose" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f8c4cf"/><stop offset="1" stop-color="#e38a9e"/></linearGradient>
+    <linearGradient id="gLens" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".45"/><stop offset=".3" stop-color="#fff" stop-opacity=".06"/><stop offset=".46" stop-color="#fff" stop-opacity=".28"/><stop offset=".56" stop-color="#fff" stop-opacity="0"/></linearGradient>
+    <linearGradient id="gBlazer" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3a3b44"/><stop offset=".5" stop-color="#26272e"/><stop offset="1" stop-color="#16171b"/></linearGradient>
+    <linearGradient id="gNeck" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2e2e34"/><stop offset="1" stop-color="#0b0b0d"/></linearGradient>
+    <radialGradient id="gPaw" cx="40%" cy="30%" r="78%"><stop offset="0" stop-color="#ffffff"/><stop offset=".6" stop-color="#f1f1f6"/><stop offset="1" stop-color="#d6d7e1"/></radialGradient>
+    <linearGradient id="gChair" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#e4e5ea"/><stop offset="1" stop-color="#c3c5ce"/></linearGradient>
+    <filter id="fur" x="-15%" y="-15%" width="130%" height="130%"><feTurbulence type="fractalNoise" baseFrequency=".9" numOctaves="2" seed="4"/><feDisplacementMap in="SourceGraphic" scale="7" xChannelSelector="R" yChannelSelector="G"/></filter>
+    <filter id="blur6" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="6"/></filter>
+  </defs>
+  <symbol id="pawSym" viewBox="0 0 40 40"><ellipse cx="20" cy="27" rx="9" ry="8" fill="#3b6cf6"/><circle cx="9" cy="17" r="4" fill="#3b6cf6"/><circle cx="16" cy="10" r="4" fill="#3b6cf6"/><circle cx="24" cy="10" r="4" fill="#3b6cf6"/><circle cx="31" cy="17" r="4" fill="#3b6cf6"/></symbol>
+</svg>
+
+<script>
+/* ======================= CAT PARTS ======================= */
+// Cat head drawn around (0,0). Pupils carry class "pupil" so the eye-tracker can move them.
+// Shading comes from the shared gradients (#gFur, #gIris…) and the #fur filter, which
+// displaces the outline with noise so edges read as soft fluff instead of a vector line.
+function catHead(){
+  const ear = (cls,flip)=>`<g transform="scale(${flip},1)"><g class="${cls}">
+      <path d="M-72,-16 C-76,-50 -72,-84 -62,-104 C-58,-110 -51,-109 -46,-104 C-34,-90 -20,-72 -8,-58 Z" fill="url(#gFur)" filter="url(#fur)"/>
+      <path d="M-63,-30 C-66,-58 -62,-82 -56,-94 C-45,-82 -33,-68 -22,-56 Z" fill="url(#gEarIn)"/>
+      <path d="M-60,-38 q7,-12 5,-28 M-52,-42 q5,-10 3,-22 M-44,-48 q3,-7 1,-14" stroke="#fff" stroke-width="2.2" fill="none" stroke-linecap="round" opacity=".95"/></g></g>`;
+  const eye = x=>`<g transform="translate(${x},2)">
+      <path d="M-16,0 C-13,-13 13,-14 16,-2 C13,12 -12,13 -16,0Z" fill="#222"/>
+      <path d="M-14.2,0 C-11.5,-11.4 11.5,-12.4 14.2,-1.6 C11.5,10.4 -10.5,11.4 -14.2,0Z" fill="url(#gIris)"/>
+      <g class="pupil"><ellipse rx="3.8" ry="9.6" fill="#0d0d0d"/></g>
+      <ellipse cx="4.5" cy="-5" rx="3.2" ry="2.3" fill="#fff" opacity=".95"/><circle cx="-5" cy="5" r="1.3" fill="#fff" opacity=".6"/>
+      <path class="lid" d="M-17,-1 C-13,-15 13,-16 17,-3 C13,13 -12,14 -17,-1Z" fill="#f2f2f6"/></g>`;
+  const whisk = s=>`<g stroke="#e4e4ec" stroke-width="1.3" stroke-linecap="round" fill="none" opacity=".95" transform="scale(${s},1)">
+      <path d="M26,38 Q62,28 104,26"/><path d="M26,42 Q66,42 106,48"/><path d="M26,46 Q62,56 98,68"/></g>`;
+  const fluff = s=>`<path transform="scale(${s},1)" d="M-70,8 L-90,14 L-76,20 L-92,30 L-74,32 L-84,44 L-64,40 L-66,52 L-52,44 Z" fill="#f1f1f6" filter="url(#fur)"/>`;
+  return `<g class="headbob">
+    <ellipse cy="80" rx="64" ry="14" fill="#000" opacity=".35" filter="url(#blur6)"/>
+    ${ear('ear-l',1)}${ear('ear-r',-1)}
+    ${fluff(1)}${fluff(-1)}
+    <path d="M0,-74 C46,-74 80,-46 80,-4 C80,24 70,46 50,60 C34,70 16,74 0,74 C-16,74 -34,70 -50,60 C-70,46 -80,24 -80,-4 C-80,-46 -46,-74 0,-74Z" fill="url(#gFur)" filter="url(#fur)"/>
+    <path d="M-18,-66 Q-14,-48 -10,-60 M-2,-70 Q0,-50 4,-66 M14,-66 Q16,-50 20,-60" stroke="#e2e3ea" stroke-width="3" fill="none" stroke-linecap="round"/>
+    <ellipse cx="0" cy="-36" rx="40" ry="22" fill="#fff" opacity=".7" filter="url(#blur6)"/>
+    ${eye(-28)}${eye(28)}
+    <ellipse cx="-12" cy="38" rx="15" ry="11" fill="#fff"/><ellipse cx="12" cy="38" rx="15" ry="11" fill="#fff"/>
+    <ellipse cx="0" cy="54" rx="11" ry="6" fill="#ececf2"/>
+    <g fill="#d9b8c0"><circle cx="-16" cy="36" r="1.2"/><circle cx="-20" cy="40" r="1.2"/><circle cx="-14" cy="42" r="1.2"/><circle cx="16" cy="36" r="1.2"/><circle cx="20" cy="40" r="1.2"/><circle cx="14" cy="42" r="1.2"/></g>
+    <path d="M-8,27 Q0,24 8,27 Q6,34 0,36 Q-6,34 -8,27Z" fill="url(#gNose)"/>
+    <ellipse cx="-2" cy="28.5" rx="3" ry="1.3" fill="#fff" opacity=".7"/>
+    <path d="M0,36 V41 M0,41 Q-6,47 -12,43 M0,41 Q6,47 12,43" stroke="#b9909a" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+    ${whisk(1)}${whisk(-1)}
+    <g stroke="#0e0e10" stroke-width="6.5" fill="url(#gLens)">
+      <rect x="-55" y="-21" width="50" height="44" rx="16"/><rect x="5" y="-21" width="50" height="44" rx="16"/></g>
+    <g stroke="#5b5c66" stroke-width="1.4" fill="none" opacity=".8" stroke-linecap="round">
+      <path d="M-46,-22 Q-30,-25 -14,-22"/><path d="M14,-22 Q30,-25 46,-22"/></g>
+    <path d="M-5,-6 Q0,-12 5,-6" stroke="#0e0e10" stroke-width="6" fill="none"/>
+    <path d="M-55,-8 L-78,-15 M55,-8 L78,-15" stroke="#0e0e10" stroke-width="5" stroke-linecap="round"/>
+  </g>`;
+}
+// Rolled turtleneck + blazer with lapels; chin sits at (0,0)
+function catBody(w=1){
+  const lapel = s=>`<g transform="scale(${s},1)"><path d="M-54,46 L-80,100 L-50,104 L-8,150 Z" fill="#202128"/>
+      <path d="M-54,46 L-80,100 L-50,104" stroke="#4a4b56" stroke-width="2" fill="none"/>
+      <path d="M${-150*w},120 C${-134*w},78 -104,60 -62,50" stroke="#555661" stroke-width="3" fill="none" opacity=".55"/></g>`;
+  let rib='';for(let x=-38;x<=38;x+=7)rib+=`M${x},6 V48 `;
+  return `<g class="breathe">
+    <path d="M${-162*w},240 C${-160*w},124 ${-132*w},64 -56,46 L0,156 L56,46 C${132*w},64 ${160*w},124 ${162*w},240Z" fill="url(#gBlazer)"/>
+    <path d="M-56,46 L0,156 L56,46 Q0,64 -56,46Z" fill="url(#gNeck)"/>
+    ${lapel(1)}${lapel(-1)}
+    <rect x="-48" y="-4" width="96" height="58" rx="24" fill="url(#gNeck)"/>
+    <path d="${rib}" stroke="#000" stroke-width="1.6" opacity=".45"/>
+    <path d="M-46,24 Q0,34 46,24" stroke="#3a3a42" stroke-width="2" fill="none"/>
+  </g>`;
+}
+const paw = (extra='')=>`<g ${extra}>
+  <path d="M-22,6 C-25,-14 -12,-23 0,-23 C12,-23 25,-14 22,6 C19,20 -19,20 -22,6Z" fill="url(#gPaw)" filter="url(#fur)"/>
+  <path d="M-9,-21 Q-8,-13 -9,-7 M0,-23 V-9 M9,-21 Q8,-13 9,-7" stroke="#cbccd6" stroke-width="1.8" fill="none" stroke-linecap="round"/></g>`;
+// Blazer sleeve along a path, with a soft highlight stripe for volume
+const sleeve = (d,w)=>`<path d="${d}" stroke="#1d1e24" stroke-width="${w}" stroke-linecap="round" fill="none"/>
+  <path d="${d}" stroke="#4a4b55" stroke-width="${w*.3}" stroke-linecap="round" fill="none" opacity=".4" transform="translate(${-w*.16},${-w*.12})"/>`;
+
+/* ======================= HERO SCENE ======================= */
+document.getElementById('heroCat').innerHTML = `
+  <defs>
+    <linearGradient id="desk" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff"/><stop offset="1" stop-color="#e9ebf5"/></linearGradient>
+    <linearGradient id="lap" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#eceef4"/><stop offset="1" stop-color="#c9ccd8"/></linearGradient>
+    <filter id="soft" x="-20%" y="-20%" width="140%" height="160%"><feDropShadow dx="0" dy="14" stdDeviation="14" flood-color="#5a64a0" flood-opacity=".22"/></filter>
+  </defs>
+  <!-- chair -->
+  <rect x="150" y="196" width="340" height="290" rx="84" fill="url(#gChair)"/>
+  <!-- body + head -->
+  <g transform="translate(320,258)">${catBody(1)}</g>
+  <g transform="translate(320,184) scale(1.2)">${catHead()}</g>
+  <!-- left sleeve resting toward the laptop -->
+  ${sleeve('M178,480 C186,430 206,388 230,354',42)}
+  <!-- thinking paw with pen -->
+  <g transform="translate(374,288)"><g class="thinkpaw">
+    ${sleeve('M92,160 C76,96 44,44 2,6',44)}
+    <line x1="-6" y1="-8" x2="-42" y2="-38" stroke="#1e1f26" stroke-width="5.5" stroke-linecap="round"/>
+    <line x1="-38" y1="-35" x2="-46" y2="-42" stroke="#c8ccd8" stroke-width="5" stroke-linecap="round"/>
+    ${paw('transform="rotate(-24)"')}</g></g>
+  <!-- desk -->
+  <ellipse cx="320" cy="470" rx="310" ry="48" fill="url(#desk)" filter="url(#soft)"/>
+  <rect x="300" y="500" width="40" height="70" fill="#e4e6ef"/>
+  <!-- laptop (back of lid) -->
+  <g filter="url(#soft)">
+    <path d="M200,340 L440,340 Q452,340 452,352 L462,462 L178,462 L188,352 Q188,340 200,340Z" fill="url(#lap)"/>
+    <rect x="170" y="458" width="300" height="12" rx="6" fill="#bfc3d1"/>
+    <text x="320" y="415" text-anchor="middle" font-family="Instrument Serif" font-style="italic" font-size="34" fill="#3a3d4d">Purrlish</text>
+    <path d="M372,385 l6,-10 M381,388 l9,-8" stroke="#3b6cf6" stroke-width="4" stroke-linecap="round" class="screen-glow"/>
+  </g>
+  <!-- left paw on laptop -->
+  <g transform="translate(232,348)">${paw()}</g>
+  <!-- books -->
+  <g transform="translate(95,420)">
+    <rect x="0" y="40" width="120" height="22" rx="4" fill="#efe6d4"/><text x="60" y="56" text-anchor="middle" font-size="11" font-weight="700" fill="#6b5a3a" font-family="DM Sans">GROWTH</text>
+    <rect x="6" y="20" width="110" height="22" rx="4" fill="#f4f4f6"/><text x="60" y="36" text-anchor="middle" font-size="11" font-weight="700" fill="#555" font-family="DM Sans">PLANS</text>
+    <rect x="2" y="0" width="114" height="22" rx="4" fill="#5d8be0"/><text x="58" y="16" text-anchor="middle" font-size="11" font-weight="700" fill="#fff" font-family="DM Sans">IDEAS</text>
+  </g>
+  <!-- pen cup -->
+  <g transform="translate(40,400)">
+    <line x1="14" y1="10" x2="8" y2="-26" stroke="#222" stroke-width="5" stroke-linecap="round"/>
+    <line x1="26" y1="10" x2="30" y2="-30" stroke="#3b6cf6" stroke-width="5" stroke-linecap="round"/>
+    <line x1="36" y1="10" x2="44" y2="-20" stroke="#e0a64b" stroke-width="5" stroke-linecap="round"/>
+    <rect x="0" y="0" width="52" height="62" rx="8" fill="#fff" stroke="#e3e4ec"/>
+    <text x="26" y="38" text-anchor="middle" font-family="Instrument Serif" font-style="italic" font-size="14" fill="#333">Purr</text>
+  </g>
+  <!-- notebook -->
+  <g transform="translate(250,486) rotate(-4)">
+    <rect width="130" height="50" rx="5" fill="#fff" stroke="#333" stroke-width="2"/>
+    <text x="14" y="20" font-family="Instrument Serif" font-style="italic" font-size="13" fill="#3b6cf6">Create · Plan</text>
+    <text x="14" y="38" font-family="Instrument Serif" font-style="italic" font-size="13" fill="#3b6cf6">Publish · Grow ☺</text>
+  </g>
+  <!-- mug -->
+  <g transform="translate(475,410)">
+    <g class="steam" stroke="#b9bfd8" stroke-width="3" fill="none" stroke-linecap="round">
+      <path d="M18,-6 q-6,-10 0,-20 q6,-10 0,-20"/><path d="M32,-6 q-6,-10 0,-20 q6,-10 0,-20"/><path d="M46,-6 q-6,-10 0,-20 q6,-10 0,-20"/></g>
+    <path d="M62,14 q22,0 22,18 q0,18 -22,18" stroke="#e3e4ec" stroke-width="7" fill="none"/>
+    <rect x="0" y="0" width="66" height="70" rx="10" fill="#fff" stroke="#e3e4ec"/>
+    <text x="8" y="24" font-size="10" font-family="DM Sans" fill="#333">Good</text>
+    <text x="8" y="37" font-size="10" font-family="DM Sans" fill="#333">Content</text>
+    <text x="8" y="50" font-size="10" font-family="DM Sans" fill="#333">Travels</text>
+    <text x="8" y="63" font-size="10" font-family="DM Sans" fill="#333">Further.</text>
+  </g>
+  <!-- plant -->
+  <g transform="translate(575,420)">
+    <g fill="#3f8f4f">
+      <path class="leaf" d="M0,0 C-30,-30 -36,-70 -20,-90 C-6,-60 -2,-30 0,0Z"/>
+      <path class="leaf" d="M0,0 C20,-30 50,-50 66,-50 C50,-30 30,-10 0,0Z" fill="#4fa860"/>
+      <path class="leaf" d="M0,0 C-10,-40 0,-90 20,-110 C24,-80 14,-40 0,0Z" fill="#57b56a"/>
+      <path class="leaf" d="M0,0 C-30,-14 -60,-12 -76,-26 C-56,-34 -26,-26 0,0Z"/>
+    </g>
+    <path d="M-26,0 H26 L20,46 H-20Z" fill="#e8e6e2"/>
+  </g>
+`;
+
+/* ======================= BUSTS FOR TILES ======================= */
+const props = {
+  selfie:`<g transform="translate(200,120)"><g class="thinkpaw">${sleeve('M-36,120 C-14,64 -2,30 0,6',34)}<rect x="-17" y="-44" width="34" height="58" rx="8" fill="#111"/><rect x="-14" y="-41" width="28" height="52" rx="6" fill="#2a2b33"/>${paw('transform="translate(0,6) scale(.8)"')}</g></g>
+          <g transform="translate(56,158)"><g class="wave">${sleeve('M26,96 C20,60 8,30 0,8',30)}${paw('transform="scale(.8)"')}</g></g>`,
+  point:`<g transform="translate(205,150)"><g class="thinkpaw">${sleeve('M-70,90 C-46,48 -22,14 -2,2',34)}${paw('transform="rotate(30) scale(.8)"')}</g></g>`,
+  phone:`<g transform="translate(200,160)"><g class="thinkpaw">${sleeve('M-70,90 C-46,48 -22,14 -2,2',34)}${paw('transform="rotate(30) scale(.8)"')}</g></g>`,
+  wave:`<g transform="translate(205,120)"><g class="wave">${sleeve('M-34,120 C-16,64 -4,30 0,6',34)}${paw('transform="scale(.85)"')}</g></g>`
+};
+document.querySelectorAll('[data-bust]').forEach(svg=>{
+  svg.innerHTML = `<g transform="translate(120,150) scale(.62)">${catBody(1)}</g>
+    <g transform="translate(120,105) scale(.72)">${catHead()}</g>${props[svg.dataset.bust]||''}`;
+  svg.style.overflow='visible';
+});
+
+/* ======================= HEADLINE WORD REVEAL ======================= */
+const words = ['The','content','cat','that','<span class="grad">never</span>','<span class="grad">sleeps.</span>'];
+document.getElementById('headline').innerHTML = words
+  .map((w,i)=>`<span class="word" style="animation-delay:${.25+i*.09}s">${w}</span>`).join(' ');
+
+/* ======================= MARQUEE ======================= */
+const plats=[['Instagram','#e1306c'],['TikTok','#111'],['LinkedIn','#0a66c2'],['YouTube','#ff0000'],['X','#111'],['Reddit','#ff4500'],['Facebook','#1877f2'],['Pinterest','#e60023'],['Threads','#111']];
+const row = plats.map(([n,c])=>`<span><i style="background:${c}"></i>${n}</span>`).join('');
+document.getElementById('track').innerHTML = row+row;
+
+/* ======================= EYE TRACKING ======================= */
+const pupils=[...document.querySelectorAll('.pupil')];
+let mx=innerWidth/2,my=innerHeight/3,raf;
+addEventListener('pointermove',e=>{mx=e.clientX;my=e.clientY;if(!raf)raf=requestAnimationFrame(look)});
+function look(){
+  raf=null;
+  pupils.forEach(p=>{
+    const r=p.parentNode.getBoundingClientRect();
+    const dx=mx-(r.left+r.width/2), dy=my-(r.top+r.height/2);
+    const a=Math.atan2(dy,dx), d=Math.min(1,Math.hypot(dx,dy)/300);
+    p.style.transform=`translate(${Math.cos(a)*5*d}px,${Math.sin(a)*2.5*d}px)`;
+  });
+}
+look();
+
+/* ======================= HERO PARALLAX ======================= */
+const scene=document.getElementById('scene');
+const fcards=[...scene.querySelectorAll('.fcard,.checklist')];
+scene.addEventListener('pointermove',e=>{
+  if(innerWidth<980)return;
+  const r=scene.getBoundingClientRect(),x=(e.clientX-r.left)/r.width-.5,y=(e.clientY-r.top)/r.height-.5;
+  fcards.forEach((c,i)=>{const k=12+(i%3)*8;c.style.translate=`${-x*k}px ${-y*k}px`});
+});
+scene.addEventListener('pointerleave',()=>fcards.forEach(c=>c.style.translate='0 0'));
+
+/* ======================= 3D TILT ======================= */
+document.querySelectorAll('.tilt').forEach(el=>{
+  el.addEventListener('pointermove',e=>{
+    const r=el.getBoundingClientRect(),x=(e.clientX-r.left)/r.width-.5,y=(e.clientY-r.top)/r.height-.5;
+    el.style.transform=`perspective(800px) rotateY(${x*10}deg) rotateX(${-y*10}deg) translateY(-4px)`;
+  });
+  el.addEventListener('pointerleave',()=>el.style.transform='');
+});
+
+/* ======================= MAGNETIC BUTTONS ======================= */
+document.querySelectorAll('.magnetic').forEach(b=>{
+  b.addEventListener('pointermove',e=>{const r=b.getBoundingClientRect();b.style.transform=`translate(${(e.clientX-r.left-r.width/2)*.25}px,${(e.clientY-r.top-r.height/2)*.35}px)`});
+  b.addEventListener('pointerleave',()=>b.style.transform='');
+});
+
+/* ======================= CHECKLIST LOOP ======================= */
+const items=[...document.querySelectorAll('#checklist li')];
+let ci=0;
+setTimeout(function tick(){
+  if(ci<items.length){items[ci++].classList.add('done');setTimeout(tick,700)}
+  else{setTimeout(()=>{items.forEach(i=>i.classList.remove('done'));ci=0;setTimeout(tick,700)},2600)}
+},2400);
+
+/* ======================= SCROLL REVEAL + COUNTERS + CHAT ======================= */
+const io=new IntersectionObserver(es=>es.forEach(e=>{
+  if(!e.isIntersecting)return;
+  e.target.classList.add('in');
+  e.target.querySelectorAll('[data-count]').forEach(countUp);
+  if(e.target.querySelector('#chat'))playChat();
+  io.unobserve(e.target);
+}),{threshold:.2});
+document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+
+function countUp(el){
+  const end=+el.dataset.count,suf=el.dataset.suffix||'',t0=performance.now(),dur=1600;
+  (function step(t){const p=Math.min(1,(t-t0)/dur),v=Math.round(end*(1-Math.pow(1-p,3)));
+    el.textContent=v.toLocaleString()+suf;if(p<1)requestAnimationFrame(step)})(t0);
+}
+function playChat(){
+  const b=[...document.querySelectorAll('#chat .bubble')];
+  const seq=()=>{b.forEach(x=>x.classList.remove('show'));b[1].style.display='';
+    [[0,300],[1,1000],[2,2400],[3,3400]].forEach(([i,t])=>setTimeout(()=>{
+      if(i===2)b[1].style.display='none';b[i].classList.add('show')},t));
+    setTimeout(seq,7000)};
+  seq();
+}
+
+/* ======================= MOBILE MENU ======================= */
+const nav=document.querySelector('nav'),burger=nav.querySelector('.burger');
+const setMenu=open=>{nav.classList.toggle('open',open);burger.setAttribute('aria-expanded',open)};
+burger.addEventListener('click',()=>setMenu(!nav.classList.contains('open')));
+nav.querySelectorAll('.mobile-menu a').forEach(a=>a.addEventListener('click',()=>setMenu(false)));
+document.addEventListener('click',e=>{if(!nav.contains(e.target))setMenu(false)});
+
+/* ======================= EXPLAINER VIDEO ======================= */
+// The iframe loads only when the play button is clicked, so the 10MB of audio and
+// images don't slow down the first paint. The click also counts as the user gesture
+// browsers require before the video's sound can start.
+const vScreen=document.querySelector('.vf-screen');
+vScreen.querySelector('.vf-play').addEventListener('click',()=>{
+  const f=vScreen.querySelector('iframe');
+  if(!f.src)f.src=f.dataset.src;
+  vScreen.classList.add('playing');
+});
+
+/* ======================= LIVE EFFECTS ======================= */
+const reduce=matchMedia('(prefers-reduced-motion:reduce)').matches;
+document.querySelectorAll('.tile,.plan,.step,.fcard').forEach(el=>el.classList.add('glow-border'));
+document.querySelectorAll('.tile').forEach(t=>t.addEventListener('pointermove',e=>{
+  const r=t.getBoundingClientRect();t.style.setProperty('--mx',e.clientX-r.left+'px');t.style.setProperty('--my',e.clientY-r.top+'px');
+}));
+
+// scroll progress + hero cat parallax
+const prog=document.getElementById('progress'),hc=document.getElementById('heroCat');
+addEventListener('scroll',()=>{
+  const h=document.documentElement;prog.style.transform=`scaleX(${h.scrollTop/(h.scrollHeight-h.clientHeight)})`;
+  if(innerWidth>=980){const y=Math.min(scrollY,700);hc.style.translate=`0 ${y*.12}px`;hc.style.scale=1-y*.00015}
+},{passive:true});
+
+// cursor spotlight
+const spot=document.getElementById('spot');
+addEventListener('pointermove',e=>{spot.style.left=e.clientX+'px';spot.style.top=e.clientY+'px'});
+
+// rotating word
+const rw=['reels','carousels','ad creative','Reddit replies','a week of posts'];let ri=0;
+setInterval(()=>{ri=(ri+1)%rw.length;document.getElementById('rot').innerHTML=`<span>${rw[ri]}</span>`},2200);
+
+// "published" toasts
+const toastData=[['Instagram','#e1306c','📸','Carousel published'],['TikTok','#111','♪','Video scheduled for 6pm'],['LinkedIn','#0a66c2','in','Post got 1.2k views'],['Reddit','#ff4500','r/','Reply drafted in r/startups'],['YouTube','#ff0000','▶','Short is live']];
+let ti=0;const tbox=document.getElementById('toasts');
+setInterval(()=>{const [n,c,ic,msg]=toastData[ti++%toastData.length];
+  const d=document.createElement('div');d.className='toast';
+  d.innerHTML=`<i style="background:${c}">${ic}</i><span><b>${n}</b> · ${msg}</span>`;
+  tbox.appendChild(d);setTimeout(()=>d.remove(),3400)},3800);
+
+// click the cat → meow + hearts
+const meows=['Meow!','Purr… posted ✓','Feed me content','Mrrrp! 🚀','Scheduling…'];
+hc.addEventListener('click',e=>{
+  hc.classList.remove('cat-jump');void hc.offsetWidth;hc.classList.add('cat-jump');
+  const r=scene.getBoundingClientRect(),m=document.createElement('div');
+  m.className='meow';m.textContent=meows[Math.floor(Math.random()*meows.length)];
+  m.style.left=e.clientX-r.left+16+'px';m.style.top=e.clientY-r.top-50+'px';
+  scene.appendChild(m);setTimeout(()=>m.remove(),1400);
+  for(let i=0;i<14;i++){const h=document.createElement('span');h.className='heart';
+    h.textContent=['💜','💙','🐾','✨','💗'][i%5];
+    const a=Math.random()*Math.PI*2,d=60+Math.random()*90;
+    h.style.left=e.clientX+'px';h.style.top=e.clientY+'px';
+    h.style.setProperty('--dx',Math.cos(a)*d+'px');h.style.setProperty('--dy',Math.sin(a)*d-40+'px');h.style.setProperty('--r',(Math.random()*120-60)+'deg');
+    document.body.appendChild(h);setTimeout(()=>h.remove(),1100)}
+});
+
+// floating particles in the hero (canvas), drifting up and pushed away by the cursor
+(function(){
+  if(reduce)return;
+  const cv=document.getElementById('fx'),ctx=cv.getContext('2d'),hero=cv.parentNode;
+  let W,H,dpr=Math.min(2,devicePixelRatio||1),pts=[],px=-999,py=-999;
+  const cols=['#3b6cf6','#7b5cff','#e3559b','#5fd0ff','#ffb547'];
+  function size(){W=hero.offsetWidth;H=hero.offsetHeight;cv.width=W*dpr;cv.height=H*dpr;ctx.setTransform(dpr,0,0,dpr,0,0)}
+  size();addEventListener('resize',size);
+  for(let i=0;i<70;i++)pts.push({x:Math.random()*W,y:Math.random()*H,r:1+Math.random()*3,vy:.15+Math.random()*.45,vx:(Math.random()-.5)*.2,c:cols[i%5],s:Math.random()<.25,t:Math.random()*6});
+  hero.addEventListener('pointermove',e=>{const r=hero.getBoundingClientRect();px=e.clientX-r.left;py=e.clientY-r.top});
+  hero.addEventListener('pointerleave',()=>{px=py=-999});
+  (function frame(){
+    ctx.clearRect(0,0,W,H);
+    for(const p of pts){
+      p.t+=.03;p.y-=p.vy;p.x+=p.vx+Math.sin(p.t)*.3;
+      const dx=p.x-px,dy=p.y-py,d=Math.hypot(dx,dy);
+      if(d<110){p.x+=dx/d*2.2;p.y+=dy/d*2.2}
+      if(p.y<-10){p.y=H+10;p.x=Math.random()*W}
+      ctx.globalAlpha=.35+Math.sin(p.t)*.25;ctx.fillStyle=p.c;
+      if(p.s){ // little 4-point sparkle
+        ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.t*.5);ctx.beginPath();
+        const R=p.r*2.4;for(let k=0;k<8;k++){const rr=k%2?R*.3:R,a=k*Math.PI/4;ctx.lineTo(Math.cos(a)*rr,Math.sin(a)*rr)}
+        ctx.fill();ctx.restore();
+      }else{ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,7);ctx.fill()}
+    }
+    requestAnimationFrame(frame);
+  })();
+})();
+
+/* ======================= PAW-PRINT CURSOR TRAIL ======================= */
+let last=0;
+addEventListener('pointermove',e=>{
+  const now=performance.now(); if(now-last<120||matchMedia('(prefers-reduced-motion:reduce)').matches)return; last=now;
+  const s=document.createElementNS('http://www.w3.org/2000/svg','svg');
+  s.setAttribute('viewBox','0 0 40 40');s.classList.add('trail');
+  s.innerHTML='<use href="#pawSym"/>';
+  s.style.left=e.clientX-8+'px';s.style.top=e.clientY-8+'px';
+  s.style.rotate=(Math.random()*40-20)+'deg';
+  document.body.appendChild(s);setTimeout(()=>s.remove(),1000);
+});
+</script>
+
+
+<script>
+/* ======================= 3D CAT ======================= */
+// The model is static (no skeleton/animations), so all motion lives here:
+// float + pedestal in CSS, head-turn via camera orbit, spin + hop on click.
+const mv=document.getElementById('cat3d'),wrap=document.getElementById('cat3dWrap');
+mv.addEventListener('load',()=>{mv.classList.add('loaded');wrap.classList.add('ready')});
+
+// Turn toward the cursor. Moving the camera to -X makes the cat appear to face right.
+let dragging=false,spinning=false;
+mv.addEventListener('pointerdown',()=>dragging=true);
+addEventListener('pointerup',()=>dragging=false);
+addEventListener('pointermove',e=>{
+  if(dragging||spinning||matchMedia('(pointer:coarse)').matches)return;
+  const r=mv.getBoundingClientRect();
+  const x=Math.max(-1,Math.min(1,(e.clientX-(r.left+r.width/2))/(innerWidth/2)));
+  const y=Math.max(-1,Math.min(1,(e.clientY-(r.top+r.height/2))/(innerHeight/2)));
+  mv.cameraOrbit=`${-x*38}deg ${80+y*8}deg auto`;
+});
+
+// Gentle idle sway on touch screens, where there is no cursor to follow
+if(matchMedia('(pointer:coarse)').matches){
+  let t=0;setInterval(()=>{if(!dragging&&!spinning){t+=.05;mv.cameraOrbit=`${Math.sin(t)*25}deg 80deg auto`}},60);
+}
+
+// Swap every drawn cat bust (feature cards + CTA) for the 3D model, framed from the chest up.
+// Each one gets its own starting angle, and they all sway gently so the page feels alive.
+const busts=[...document.querySelectorAll('[data-bust]')].map((svg,i)=>{
+  const cta=!!svg.closest('.cta'),m=document.createElement('model-viewer');
+  m.src='models/cat-hoodie.glb';m.alt='3D cat';m.loading='lazy';
+  m.className=cta?'cat3d-cta':'cat3d-bust';
+  m.dataset.base=[-22,18,-12,26,-16][i%5];
+  m.setAttribute('camera-target',cta?'0m 0.2m 0m':'0m 0.4m 0m');
+  m.setAttribute('camera-orbit',`${m.dataset.base}deg 82deg ${cta?'3.4m':'2.5m'}`);
+  for(const [k,v] of [['field-of-view','24deg'],['environment-image','neutral'],['exposure','1.05'],['interaction-prompt','none'],['interpolation-decay','200']])m.setAttribute(k,v);
+  svg.replaceWith(m);return m;
+});
+let sw=0;setInterval(()=>{sw+=.04;busts.forEach((m,i)=>{
+  m.cameraOrbit=`${+m.dataset.base+Math.sin(sw+i)*12}deg ${82+Math.sin(sw*.7+i)*3}deg ${m.classList.contains('cat3d-cta')?'3.4m':'2.5m'}`})},80);
+
+// Click (not drag) → 360° spin, hop, and the shared meow + hearts effect
+let downAt=null;
+mv.addEventListener('pointerdown',e=>downAt=[e.clientX,e.clientY]);
+mv.addEventListener('click',e=>{
+  if(!downAt||Math.hypot(e.clientX-downAt[0],e.clientY-downAt[1])>6)return;
+  wrap.classList.remove('hop');void wrap.offsetWidth;wrap.classList.add('hop');
+  document.getElementById('heroCat').dispatchEvent(new MouseEvent('click',{clientX:e.clientX,clientY:e.clientY}));
+  if(spinning)return;spinning=true;
+  const t0=performance.now();
+  (function spin(t){const p=Math.min(1,(t-t0)/900),ease=1-Math.pow(1-p,3);
+    mv.orientation=`0deg 0deg ${ease*360}deg`;
+    if(p<1)requestAnimationFrame(spin);else{mv.orientation='0deg 0deg 0deg';spinning=false}})(t0);
+});
+</script>
+</body>
+</html>
